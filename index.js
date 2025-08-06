@@ -7,12 +7,14 @@ const redis = require("redis");
 // Create Redis Client
 let client = redis.createClient();
 
-client.on("connect", () => {
-  console.log("Redis connected");
-});
-client.on("error", (err) => {
-  console.error("Redis error:", err);
-});
+client
+  .connect()
+  .then(() => {
+    console.log("Redis connected");
+  })
+  .catch((err) => {
+    console.error("Redis connection error:", err);
+  });
 
 const port = 5000;
 
@@ -39,8 +41,26 @@ app.get("/", (req, res, next) => {
 });
 
 // Search Processin
-app.post("/users/search", (req, res, next) => {
+app.post("/user/search", async (req, res, next) => {
   const id = req.body.id;
+  try {
+    const obj = await client.hGetAll(id);
+    console.log({ obj });
+    if (!obj || Object.keys(obj).length === 0) {
+      res.render("searchusers", {
+        error: "User does not exist",
+      });
+    } else {
+      obj.id = id;
+      res.render("details", {
+        user: obj,
+      });
+    }
+  } catch (error) {
+    res.render("searchusers", {
+      error: "Error fetching user data",
+    });
+  }
 });
 
 app.listen(port, () => {
