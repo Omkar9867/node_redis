@@ -63,6 +63,50 @@ app.post("/user/search", async (req, res, next) => {
   }
 });
 
+// Add user Page
+app.get("/user/add", async (req, res, next) => {
+  res.render("adduser");
+});
+app.post("/user/add", async (req, res, next) => {
+  let newUser = req.body;
+  console.log({ newUser });
+  // Ensure all fields are present and not undefined
+  if (
+    !newUser.id ||
+    !newUser.first_name ||
+    !newUser.last_name ||
+    !newUser.email ||
+    !newUser.phone
+  ) {
+    return res.render("adduser", {
+      error: "All fields are required.....",
+      ...newUser,
+    });
+  }
+  try {
+    const reply = await client.hSet(
+      newUser.id,
+      "first_name",
+      newUser.first_name,
+      "last_name",
+      newUser.last_name,
+      "email",
+      newUser.email,
+      "phone",
+      newUser.phone
+    );
+
+    console.log("reply: ", reply);
+    res.redirect("/");
+  } catch (error) {
+    res.render("adduser", {
+      error: "Error...",
+      error,
+      ...newUser, // This spreads back the input values to keep them filled
+    });
+  }
+});
+
 app.listen(port, () => {
   console.log("Server started on port " + port);
 });
